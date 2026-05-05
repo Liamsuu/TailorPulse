@@ -277,7 +277,7 @@ function SidebarTrigger({
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state, isMobile, } = useSidebar()
 
   return (
     <button
@@ -297,7 +297,18 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
         className
       )}
       {...props}
-    />
+    >
+      <div className="flex h-full w-full items-center justify-center">
+        <PanelLeftIcon
+          className={cn(
+            "size-4 text-sidebar-foreground transition-transform",
+            state === "collapsed" ? "rotate-0" : "-rotate-180"
+          )}
+          aria-hidden
+        />
+        <span className="sr-only">Toggle Sidebar</span>
+      </div>
+    </button>
   )
 }
 

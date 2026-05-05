@@ -1,8 +1,7 @@
+import { createFileRoute } from "@tanstack/react-router";
 import SideBarLayout from "@/components/SideBarLayout";
 
-import { createFileRoute } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/history")({
+export const Route = createFileRoute("/profile")({
   component: RouteComponent,
 });
 
