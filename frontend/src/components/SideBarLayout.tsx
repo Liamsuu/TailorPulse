@@ -8,13 +8,14 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
 } from "./ui/sidebar";
 import { Separator } from "./ui/separator";
 
 import { Link, useLocation } from "@tanstack/react-router";
 
 // Icons
-import { CirclePlus, FileText, User } from "lucide-react";
+import { CirclePlus, FileText, User, Settings } from "lucide-react";
 
 function SideBarLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -27,7 +28,7 @@ function SideBarLayout({ children }: { children: React.ReactNode }) {
       <Sidebar variant="floating">
         <SidebarHeader>
           <div className="flex items-center justify-between">
-            <div className="p-2">TailorPulse</div>
+            <div className="p-2 text-[1.2rem]">TailorPulse</div>
             <SidebarTrigger />
           </div>
         </SidebarHeader>
@@ -57,8 +58,22 @@ function SideBarLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isActive("/settings", true)}>
+                <Link to="/settings">
+                  <Settings />
+                  Settings
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenu>
+            <Separator />
+            <p className="pt-2 text-xs">&copy; 2026 Liam Colley</p>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
       <SidebarRail />
 
