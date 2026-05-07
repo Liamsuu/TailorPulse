@@ -3,6 +3,15 @@ import multer from "multer";
 import mammoth from "mammoth";
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
+import {
+  AlignmentType,
+  Document,
+  HeadingLevel,
+  Packer,
+  Paragraph,
+  TextRun,
+} from "docx";
+
 import "dotenv/config";
 
 const apiRouter = Router();
@@ -59,6 +68,148 @@ const CVStructureSchema = z.object({
     .describe("How well this matches the job description"),
 });
 
+type CVStructure = z.infer<typeof CVStructureSchema>;
+
+function getAiErrorMessage(err: unknown) {
+  if (typeof err !== "object" || err === null) {
+    return "The AI service is busy right now. Please try again in a few moments.";
+  }
+
+  const error = err as {
+    status?: number;
+    message?: string;
+    error?: { message?: string; status?: string };
+  };
+
+  const apiMessage =
+    error.error?.message ??
+    error.message ??
+    "The AI service is busy right now. Please try again in a few moments.";
+
+  if (error.status === 503 || error.error?.status === "UNAVAILABLE") {
+    return "The AI service is busy right now. Please try again in a few moments.";
+  }
+
+  return apiMessage;
+}
+
+function buildCvDocument(cvData: CVStructure) {
+  const headerLines = [
+    cvData.header.fullName,
+    cvData.header.location,
+    cvData.header.email,
+    cvData.header.phone,
+    cvData.header.linkedIn,
+    cvData.header.portfolio,
+  ].filter(Boolean);
+
+  const experienceSections = cvData.experience.flatMap((experience) => [
+    new Paragraph({
+      children: [
+        new TextRun({ text: experience.role, bold: true }),
+        new TextRun({
+          text: ` | ${experience.company} | ${experience.location}`,
+        }),
+      ],
+      spacing: { before: 120 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: experience.duration, italics: true })],
+    }),
+    ...experience.bulletPoints.map(
+      (bulletPoint) =>
+        new Paragraph({
+          text: bulletPoint,
+          bullet: { level: 0 },
+        }),
+    ),
+  ]);
+
+  const educationSections = cvData.education.flatMap((education) => [
+    new Paragraph({
+      children: [
+        new TextRun({ text: education.degree, bold: true }),
+        new TextRun({ text: ` | ${education.school}` }),
+      ],
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: education.graduationYear, italics: true }),
+      ],
+    }),
+  ]);
+
+  return new Document({
+    sections: [
+      {
+        properties: {},
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cvData.header.fullName,
+                bold: true,
+                size: 32,
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: headerLines.slice(1).join(" | "), size: 20 }),
+            ],
+            alignment: AlignmentType.CENTER,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `ATS Match Score: ${cvData.atsScore}/100`,
+                italics: true,
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+          }),
+          new Paragraph({ text: "" }),
+          new Paragraph({
+            text: "PROFESSIONAL SUMMARY",
+            heading: HeadingLevel.HEADING_2,
+          }),
+          new Paragraph({ text: cvData.professionalSummary }),
+          new Paragraph({ text: "" }),
+          new Paragraph({
+            text: "WORK EXPERIENCE",
+            heading: HeadingLevel.HEADING_2,
+          }),
+          ...experienceSections,
+          new Paragraph({ text: "" }),
+          new Paragraph({ text: "EDUCATION", heading: HeadingLevel.HEADING_2 }),
+          ...educationSections,
+          new Paragraph({ text: "" }),
+          new Paragraph({ text: "SKILLS", heading: HeadingLevel.HEADING_2 }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Technical: ", bold: true }),
+              new TextRun({ text: cvData.skills.technical.join(", ") }),
+            ],
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Soft: ", bold: true }),
+              new TextRun({ text: cvData.skills.soft.join(", ") }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+}
+
+function buildSafeFileName(fullName: string) {
+  return (
+    fullName.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "tailored-cv"
+  );
+}
+
 apiRouter.post("/analyse", upload.single("cv-upload"), async (req, res) => {
   const file = req.file;
   const jobDescription = String(req.body["job-description"] || "");
@@ -108,12 +259,42 @@ apiRouter.post("/analyse", upload.single("cv-upload"), async (req, res) => {
     });
 
     const responseText = String(result.text);
-    const finalData = JSON.parse(responseText);
+    const finalData = CVStructureSchema.parse(JSON.parse(responseText));
 
     return res.json(finalData);
   } catch (err) {
     console.error("Error processing file:", err);
-    return res.status(500).json({ message: "Failed to process file" });
+    const status =
+      typeof err === "object" &&
+      err !== null &&
+      "status" in err &&
+      (err as { status?: number }).status === 503
+        ? 503
+        : 500;
+
+    return res.status(status).json({ message: getAiErrorMessage(err) });
+  }
+});
+
+apiRouter.post("/analyse/docx", async (req, res) => {
+  try {
+    const finalData = CVStructureSchema.parse(req.body);
+    const doc = buildCvDocument(finalData);
+    const buffer = await Packer.toBuffer(doc);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${buildSafeFileName(finalData.header.fullName)}.docx"`,
+    );
+
+    return res.send(buffer);
+  } catch (err) {
+    console.error("Error building DOCX:", err);
+    return res.status(400).json({ message: "Invalid CV data" });
   }
 });
 

@@ -77,7 +77,9 @@ function SideBarLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarRail />
 
-      <div className="flex items-center ml-auto mr-auto">{children}</div>
+      <div className="flex items-center justify-center w-full ml-auto mr-auto">
+        {children}
+      </div>
     </SidebarProvider>
   );
 }

@@ -3,7 +3,7 @@ import apiRouter from "./routes/apiRoutes.js";
 import cors from "cors";
 
 const app = express();
-app.use(cors());
+app.use(cors({ exposedHeaders: ["Content-Disposition"] }));
 app.use(express.json());
 const PORT: number = 3000;
 
