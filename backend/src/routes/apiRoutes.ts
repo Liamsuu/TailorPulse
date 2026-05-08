@@ -253,8 +253,17 @@ apiRouter.post("/analyse", upload.single("cv-upload"), async (req, res) => {
       config: {
         responseMimeType: "application/json",
         responseJsonSchema: z.toJSONSchema(CVStructureSchema),
-        systemInstruction:
-          "You are an ATS optimization expert. Rewrite the user's CV to match the job description perfectly without inventing fake facts.",
+        systemInstruction: `You are an ATS Optimization Expert. 
+Your goal is to rephrase the user's CV to match the job description.
+
+RULES FOR ADDING SKILLS:
+1. REASONABLE INFERENCE: You MAY include foundational skills that are logically required by the tools listed in the source CV. 
+   - Example: If the CV lists 'React', you may include 'JavaScript', 'HTML5', and 'CSS3'.
+   - Example: If the CV lists 'Node.js', you may include 'NPM' or 'REST APIs'.
+2. PROHIBITED HALLUCINATIONS: Do not add specialized libraries or complex technologies that are NOT in the source and cannot be logically inferred. 
+   - DO NOT add: Redux, WebSockets, Docker, or AWS unless explicitly mentioned or strongly implied by specific projects.
+3. ANONYMITY: Do not mention the name of the Target Company from the job description.
+4. TONE: Use the STAR method for bullet points. Ensure every bullet point starts with a strong action verb.`,
       },
     });
 
