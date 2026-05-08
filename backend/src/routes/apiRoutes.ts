@@ -140,6 +140,15 @@ function buildCvDocument(cvData: CVStructure) {
   ]);
 
   return new Document({
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: "Arial",
+          },
+        },
+      },
+    },
     sections: [
       {
         properties: {},
@@ -157,15 +166,6 @@ function buildCvDocument(cvData: CVStructure) {
           new Paragraph({
             children: [
               new TextRun({ text: headerLines.slice(1).join(" | "), size: 20 }),
-            ],
-            alignment: AlignmentType.CENTER,
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `ATS Match Score: ${cvData.atsScore}/100`,
-                italics: true,
-              }),
             ],
             alignment: AlignmentType.CENTER,
           }),
