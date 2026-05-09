@@ -61,6 +61,17 @@ const CVStructureSchema = z.object({
     technical: z.array(z.string()),
     soft: z.array(z.string()),
   }),
+  projects: z.array(
+    z.object({
+      name: z.string(),
+      description: z.string().describe("Brief description of the project"),
+      bulletPoints: z
+        .array(z.string())
+        .describe(
+          "Bullets describing the skills used, and a description using the STAR method.",
+        ),
+    }),
+  ),
   atsScore: z
     .number()
     .min(0)
@@ -125,6 +136,23 @@ function buildCvDocument(cvData: CVStructure) {
     ),
   ]);
 
+  const projectSections = cvData.projects.flatMap((project) => [
+    new Paragraph({
+      children: [
+        new TextRun({ text: project.name, bold: true }),
+        new TextRun({ text: ` - ${project.description}`, bold: true }),
+      ],
+      spacing: { before: 120 },
+    }),
+    ...project.bulletPoints.map(
+      (bulletPoint) =>
+        new Paragraph({
+          text: bulletPoint,
+          bullet: { level: 0 },
+        }),
+    ),
+  ]);
+
   const educationSections = cvData.education.flatMap((education) => [
     new Paragraph({
       children: [
@@ -181,6 +209,12 @@ function buildCvDocument(cvData: CVStructure) {
             heading: HeadingLevel.HEADING_2,
           }),
           ...experienceSections,
+          new Paragraph({ text: "" }),
+          new Paragraph({
+            text: "PERSONAL PROJECTS",
+            heading: HeadingLevel.HEADING_2,
+          }),
+          ...projectSections,
           new Paragraph({ text: "" }),
           new Paragraph({ text: "EDUCATION", heading: HeadingLevel.HEADING_2 }),
           ...educationSections,

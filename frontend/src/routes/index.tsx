@@ -45,6 +45,11 @@ type CVStructure = {
     technical: string[];
     soft: string[];
   };
+  projects: Array<{
+    name: string;
+    description: string;
+    bulletPoints: string[];
+  }>;
   atsScore: number;
 };
 
@@ -218,6 +223,29 @@ function Index() {
                     {education.graduationYear}
                   </p>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Personal Projects
+            </h3>
+            <div className="mt-4 space-y-5">
+              {cvData.projects.map((project) => (
+                <article key={project.name}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h4 className="font-medium">{project.name}</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {project.description}
+                  </p>
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">
+                    {project.bulletPoints.map((bulletPoint) => (
+                      <li key={bulletPoint}>{bulletPoint}</li>
+                    ))}
+                  </ul>
+                </article>
               ))}
             </div>
           </div>
