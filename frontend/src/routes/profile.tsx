@@ -6,5 +6,11 @@ export const Route = createFileRoute("/profile")({
 });
 
 function RouteComponent() {
-  return <SideBarLayout></SideBarLayout>;
+  return (
+    <SideBarLayout>
+      <div className="p-4">
+        <h1 className="text-2xl font-bold">Profile</h1>
+      </div>
+    </SideBarLayout>
+  );
 }

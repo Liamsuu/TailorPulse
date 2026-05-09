@@ -7,5 +7,11 @@ export const Route = createFileRoute("/history")({
 });
 
 function RouteComponent() {
-  return <SideBarLayout></SideBarLayout>;
+  return (
+    <SideBarLayout>
+      <div className="p-4">
+        <h1 className="text-2xl font-bold">History</h1>
+      </div>
+    </SideBarLayout>
+  );
 }
