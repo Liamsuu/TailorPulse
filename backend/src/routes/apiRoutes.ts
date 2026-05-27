@@ -282,7 +282,7 @@ apiRouter.post("/analyse", upload.single("cv-upload"), async (req, res) => {
     // Calling the AI
 
     const result = await genAI.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-3.1-flash-lite",
       contents: [{ role: "user", parts: aiContent }],
       config: {
         responseMimeType: "application/json",
