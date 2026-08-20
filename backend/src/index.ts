@@ -18,7 +18,21 @@ const limiter = rateLimit({
   },
 });
 
-app.use(cors({ exposedHeaders: ["Content-Disposition"] }));
+app.use(
+  cors({
+    origin: "https://aws-transfer.dqqn9vlu08vdh.amplifyapp.com/",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Amz-Date",
+      "X-Api-Key",
+      "X-Amz-Security-Token",
+    ],
+    exposedHeaders: ["Content-Disposition"],
+  }),
+);
+
 app.use(express.json());
 app.use(limiter);
 app.set("trust proxy", 1);
