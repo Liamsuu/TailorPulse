@@ -1,4 +1,5 @@
 import express from "express";
+import serverless from "serverless-http";
 import apiRouter from "./routes/apiRoutes.js";
 import cors from "cors";
 import { rateLimit } from "express-rate-limit";
@@ -22,13 +23,6 @@ app.use(express.json());
 app.use(limiter);
 app.set("trust proxy", 1);
 
-const PORT: number = 3000;
-
 app.use("/api", apiRouter);
 
-app.listen(PORT, (error) => {
-  if (error) {
-    throw error;
-  }
-  console.log(`Server is running on port: ${PORT}`);
-});
+module.exports.handler = serverless(app);
