@@ -37,6 +37,6 @@ app.use(express.json());
 app.use(limiter);
 app.set("trust proxy", 1);
 
-app.use("/api", apiRouter);
+app.use("/prod/api", apiRouter);
 
 module.exports.handler = serverless(app);
