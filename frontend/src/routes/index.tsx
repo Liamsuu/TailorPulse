@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import SideBarLayout from "@/components/SideBarLayout";
 import {
   Empty,
@@ -122,19 +123,45 @@ function Index() {
   async function handleDownload() {
     if (!cvData) return;
 
+    const docxMimeType =
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    function base64ToDocxBlob(base64Text: string) {
+      const normalized = base64Text.replace(/\s/g, "");
+      const binary = atob(normalized);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      return new Blob([bytes], { type: docxMimeType });
+    }
+
     try {
       setErrorMessage(null);
-      const response = await axios.post(
+      const response = await axios.post<ArrayBuffer>(
         `${import.meta.env.VITE_BACKEND_BASE_URL}api/analyse/docx`,
         cvData,
-        { responseType: "blob" },
+        { responseType: "arraybuffer" },
       );
 
       const contentDisposition = response.headers["content-disposition"];
       const fileName =
         contentDisposition?.match(/filename="?([^";]+)"?/)?.[1] ??
         "tailored-cv.docx";
-      const downloadUrl = URL.createObjectURL(response.data);
+
+      const rawBytes = new Uint8Array(response.data);
+      const payloadPreview = new TextDecoder("ascii").decode(
+        rawBytes.slice(0, 16),
+      );
+
+      // Some API Gateway setups forward base64 text instead of raw binary bytes.
+      const downloadBlob = payloadPreview.startsWith("UEsDB")
+        ? base64ToDocxBlob(new TextDecoder("utf-8").decode(rawBytes))
+        : new Blob([rawBytes], { type: docxMimeType });
+
+      const downloadUrl = URL.createObjectURL(downloadBlob);
       const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = fileName;

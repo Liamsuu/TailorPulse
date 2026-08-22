@@ -20,7 +20,7 @@ const limiter = rateLimit({
 
 app.use(
   cors({
-    origin: "https://aws-transfer.dqqn9vlu08vdh.amplifyapp.com/",
+    origin: "https://aws-transfer.dqqn9vlu08vdh.amplifyapp.com",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
@@ -37,6 +37,11 @@ app.use(express.json());
 app.use(limiter);
 app.set("trust proxy", 1);
 
-app.use("/prod/api", apiRouter);
+app.use("/api", apiRouter);
 
-module.exports.handler = serverless(app);
+export const handler = serverless(app, {
+  binary: [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/octet-stream",
+  ],
+});

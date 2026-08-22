@@ -19,12 +19,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Initialize AI Model
 const geminiApiKey = process.env.GEMINI_API_KEY;
-
-if (!geminiApiKey) {
-  throw new Error("GEMINI_API_KEY is not set");
-}
-
-const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
+const genAI = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
 // Define Schema so TypeScript and Gemini know the shape
 const CVStructureSchema = z.object({
@@ -248,6 +243,12 @@ apiRouter.post("/analyse", upload.single("cv-upload"), async (req, res) => {
   const file = req.file;
   const jobDescription = String(req.body["job-description"] || "");
 
+  if (!genAI) {
+    return res.status(500).json({
+      message: "Server misconfigured: GEMINI_API_KEY is missing",
+    });
+  }
+
   if (!file) return res.status(400).json({ message: "No file uploaded" });
 
   const mimeType = file.mimetype;
@@ -329,6 +330,8 @@ apiRouter.post("/analyse/docx", async (req, res) => {
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
+    res.setHeader("Content-Length", buffer.length.toString());
+    res.setHeader("Content-Transfer-Encoding", "binary");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${buildSafeFileName(finalData.header.fullName)}.docx"`,
